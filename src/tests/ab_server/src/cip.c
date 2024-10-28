@@ -708,10 +708,19 @@ bool process_tag_segment(plc_s *plc, slice_s input, tag_def_s **tag, size_t *sta
                 }
             }
 
-            /* calculate the offset. */
-            element_offset = (size_t)(dimensions[0] * ((*tag)->dimensions[1] * (*tag)->dimensions[2]) +
-                                      dimensions[1] *  (*tag)->dimensions[2] +
-                                      dimensions[2]);
+            /* calculate the offset based on the number of dimensions. */
+            if((*tag)->num_dimensions == 1) {
+                element_offset = dimensions[0];
+            } else if((*tag)->num_dimensions == 2) {
+                element_offset = dimensions[0] * (*tag)->dimensions[1] + dimensions[1];
+            } else if((*tag)->num_dimensions == 3) {
+                element_offset = dimensions[0] * (*tag)->dimensions[1] * (*tag)->dimensions[2] +
+                                dimensions[1] * (*tag)->dimensions[2] +
+                                dimensions[2];
+            } else {
+                info("Unsupported number of dimensions: %d", (*tag)->num_dimensions);
+                return false;
+            }
 
             *start_read_offset = (size_t)((*tag)->elem_size * element_offset);
         } else {
@@ -721,8 +730,6 @@ bool process_tag_segment(plc_s *plc, slice_s input, tag_def_s **tag, size_t *sta
         info("Tag %.*s not found!", slice_len(tag_name), (const char *)(tag_name.data));
         return false;
     }
-
-
 
     return true;
 }
