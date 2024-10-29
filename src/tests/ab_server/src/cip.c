@@ -452,8 +452,8 @@ slice_s handle_read_request(slice_s input, slice_s output, plc_s *plc)
     }
 
     /* check to make sure that the offset passed is within the bounds. */
-    if(read_start_offset + byte_offset > tag_data_length) {
-        info("request offset is past the end of the tag!");
+    if(read_start_offset + byte_offset + total_request_size > tag_data_length) {
+        info("Read operation exceeds tag data length!");
         return make_cip_error(output, read_cmd | CIP_DONE, CIP_ERR_EXTENDED, true, CIP_ERR_EX_TOO_LONG);
     }
 
@@ -493,15 +493,15 @@ slice_s handle_read_request(slice_s input, slice_s output, plc_s *plc)
     info("output space = %d", slice_len(output) - offset);
 
     /* FIXME - use memcpy */
+    /* copy the data, including read_start_offset */
     for(size_t i=0; i < amount_to_copy; i++) {
-        slice_set_uint8(output, offset + i, tag->data[byte_offset + i]);
+        slice_set_uint8(output, offset + i, tag->data[read_start_offset + byte_offset + i]);
     }
 
     offset += amount_to_copy;
 
     return slice_from_slice(output, 0, offset);
 }
-
 
 
 
@@ -578,16 +578,16 @@ slice_s handle_write_request(slice_s input, slice_s output, plc_s *plc)
     info("total_request_size = %d", total_request_size);
 
     /* check the amount */
-    if(byte_offset + total_request_size > tag_data_length) {
-        info("request tries to write too much data!");
+    if(write_start_offset + byte_offset + total_request_size > tag_data_length) {
+        info("Write operation exceeds tag data length!");
         return make_cip_error(output, write_cmd | CIP_DONE, CIP_ERR_EXTENDED, true, CIP_ERR_EX_TOO_LONG);
     }
 
-    /* copy the data. */
+    /* copy the data, including write_start_offset */
     info("byte_offset = %d", byte_offset);
     info("offset = %d", offset);
     info("total_request_size = %d", total_request_size);
-    memcpy(&tag->data[byte_offset], slice_get_bytes(input, offset), total_request_size);
+    memcpy(&tag->data[write_start_offset + byte_offset], slice_get_bytes(input, offset), total_request_size);
 
     /* start making the response. */
     offset = 0;
@@ -708,10 +708,19 @@ bool process_tag_segment(plc_s *plc, slice_s input, tag_def_s **tag, size_t *sta
                 }
             }
 
-            /* calculate the offset. */
-            element_offset = (size_t)(dimensions[0] * ((*tag)->dimensions[1] * (*tag)->dimensions[2]) +
-                                      dimensions[1] *  (*tag)->dimensions[2] +
-                                      dimensions[2]);
+            /* calculate the offset based on the number of dimensions */
+            if ((*tag)->num_dimensions == 1) {
+                element_offset = dimensions[0];
+            } else if ((*tag)->num_dimensions == 2) {
+                element_offset = dimensions[0] * (*tag)->dimensions[1] + dimensions[1];
+            } else if ((*tag)->num_dimensions == 3) {
+                element_offset = dimensions[0] * (*tag)->dimensions[1] * (*tag)->dimensions[2] +
+                                 dimensions[1] * (*tag)->dimensions[2] +
+                                 dimensions[2];
+            } else {
+                info("Unsupported number of dimensions: %d", (*tag)->num_dimensions);
+                return false;
+            }
 
             *start_read_offset = (size_t)((*tag)->elem_size * element_offset);
         } else {
@@ -721,8 +730,6 @@ bool process_tag_segment(plc_s *plc, slice_s input, tag_def_s **tag, size_t *sta
         info("Tag %.*s not found!", slice_len(tag_name), (const char *)(tag_name.data));
         return false;
     }
-
-
 
     return true;
 }

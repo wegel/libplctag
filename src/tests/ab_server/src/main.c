@@ -497,8 +497,8 @@ void parse_pccc_tag(const char *tag_str, plc_s *plc)
 
     /* make sure all the dimensions are defaulted to something sane. */
     tag->dimensions[0] = 1;
-    tag->dimensions[1] = 1;
-    tag->dimensions[2] = 1;
+    tag->dimensions[1] = 0;
+    tag->dimensions[2] = 0;
 
     /* match the size. */
     num_dims = str_scanf(size_str, "%zu", &tag->dimensions[0]);
