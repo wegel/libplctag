@@ -487,6 +487,7 @@ elseif (BUILD_EXAMPLES)
                             test_callback_ex_modbus
                             test_connection_group
                             test_many_tag_perf
+                            test_multithreaded_write
                             test_raw_cip
                             test_reconnect
                             test_sequential_write
@@ -523,6 +524,7 @@ elseif (BUILD_EXAMPLES)
                             test_callback_ex
                             test_connection_group
                             test_event_windows
+                            test_multithreaded_write
                             test_raw_cip
                             test_sequential_write
                             test_shutdown
