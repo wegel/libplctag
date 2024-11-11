@@ -140,6 +140,17 @@ jobs:
         echo "shut down server."
         killall ab_server -INT &> /dev/null
 
+    - name: Test Multithreaded Array Writes
+      run: |
+        cd ${{ env.DIST }}
+        echo "start up simulator..."
+        ${{ env.DIST }}/ab_server --plc=ControlLogix --path=1,0 --tag=TestBigArray:DINT[5] &
+        sleep 2
+        echo "test multithreaded array writes..."
+        ${{ env.DIST }}/test_multithreaded_write 127.0.0.1 1,0 TestBigArray 5 2000
+        echo "shut down server."
+        killall ab_server -INT &> /dev/null
+
     - name: Upload ZIP artifact
       uses: actions/upload-artifact@v4
       with:
@@ -279,6 +290,17 @@ jobs:
         echo "shut down server."
         killall ab_server -INT &> /dev/null
 
+    - name: Test Multithreaded Array Writes
+      run: |
+        cd ${{ env.DIST }}
+        echo "start up simulator..."
+        ${{ env.DIST }}/ab_server --plc=ControlLogix --path=1,0 --tag=TestBigArray:DINT[5] &
+        sleep 2
+        echo "test multithreaded array writes..."
+        ${{ env.DIST }}/test_multithreaded_write 127.0.0.1 1,0 TestBigArray 5 2000
+        echo "shut down server."
+        killall ab_server -INT &> /dev/null
+
     - name: Upload ZIP artifact
       uses: actions/upload-artifact@v4
       with:
@@ -412,6 +434,17 @@ jobs:
         sleep 2
         echo "test sequential array writes..."
         ${{ env.DIST }}/test_sequential_write 127.0.0.1 1,0 TestBigArray 5 2000
+        echo "shut down server."
+        killall ab_server -INT &> /dev/null
+
+    - name: Test Multithreaded Array Writes
+      run: |
+        cd ${{ env.DIST }}
+        echo "start up simulator..."
+        ${{ env.DIST }}/ab_server --plc=ControlLogix --path=1,0 --tag=TestBigArray:DINT[5] &
+        sleep 2
+        echo "test multithreaded array writes..."
+        ${{ env.DIST }}/test_multithreaded_write 127.0.0.1 1,0 TestBigArray 5 2000
         echo "shut down server."
         killall ab_server -INT &> /dev/null
 
@@ -600,6 +633,20 @@ jobs:
         exit /b %test_result%
       shell: cmd
 
+    - name: Test Multithreaded Array Writes
+      run: |
+        cd ${{ env.DIST }}\Release
+        echo "start up simulator..."
+        start /b .\ab_server.exe --plc=ControlLogix --path=1,0 --tag=TestBigArray:DINT[5]
+        timeout /T 5
+        echo "test multithreaded array writes..."
+        .\test_multithreaded_write.exe 127.0.0.1 1,0 TestBigArray 5 2000
+        set test_result=%errorlevel%
+        echo "shut down server."
+        taskkill /F /IM ab_server.exe
+        exit /b %test_result%
+      shell: cmd
+
     - name: Upload ZIP artifact
       uses: actions/upload-artifact@v4
       with:
@@ -744,6 +791,20 @@ jobs:
         timeout /T 5
         echo "test sequential array writes..."
         .\test_sequential_write.exe 127.0.0.1 1,0 TestBigArray 5 2000
+        set test_result=%errorlevel%
+        echo "shut down server."
+        taskkill /F /IM ab_server.exe
+        exit /b %test_result%
+      shell: cmd
+
+    - name: Test Multithreaded Array Writes
+      run: |
+        cd ${{ env.DIST }}\Release
+        echo "start up simulator..."
+        start /b .\ab_server.exe --plc=ControlLogix --path=1,0 --tag=TestBigArray:DINT[5]
+        timeout /T 5
+        echo "test multithreaded array writes..."
+        .\test_multithreaded_write.exe 127.0.0.1 1,0 TestBigArray 5 2000
         set test_result=%errorlevel%
         echo "shut down server."
         taskkill /F /IM ab_server.exe

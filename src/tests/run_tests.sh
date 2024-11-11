@@ -313,6 +313,18 @@ else
     let SUCCESSES++
 fi
 
+let TEST++
+echo -n "Test $TEST: multithreaded array writes... "
+$TEST_DIR/test_multithreaded_write 127.0.0.1 1,0 TestBigArray 5 2000 > "${TEST}_multithreaded_write_test.log" 2>&1
+if [ $? != 0 ]; then
+    echo "FAILURE"
+    let FAILURES++
+else
+    echo "OK"
+    let SUCCESSES++
+fi
+
+
 # echo "  Killing AB emulator."
 killall -TERM ab_server > /dev/null 2>&1
 
