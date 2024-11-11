@@ -489,6 +489,7 @@ elseif (BUILD_EXAMPLES)
                             test_many_tag_perf
                             test_raw_cip
                             test_reconnect
+                            test_sequential_write
                             test_shutdown
                             test_special
                             test_string
@@ -523,6 +524,7 @@ elseif (BUILD_EXAMPLES)
                             test_connection_group
                             test_event_windows
                             test_raw_cip
+                            test_sequential_write
                             test_shutdown
                             test_special
                             test_string
