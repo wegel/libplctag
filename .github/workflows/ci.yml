@@ -2,7 +2,6 @@ name: libplctag CI
 
 on:
   push:
-    branches: [ release, prerelease, split_omron ]
   pull_request:
     branches: [ release, prerelease, split_omron ]
 
