@@ -2,9 +2,9 @@ name: libplctag CI
 
 on:
   push:
-    branches: [ release, prerelease, split_omron ]
+    branches: [ release, prerelease, split_omron, diagnose-race-tag-not-found ]
   pull_request:
-    branches: [ release, prerelease, split_omron ]
+    branches: [ release, prerelease, split_omron, diagnose-race-tag-not-found ]
 
 jobs:
   ubuntu_x64:
@@ -49,6 +49,17 @@ jobs:
         ${{ env.DIST }}/simple
         echo "test callback use."
         ${{ env.DIST }}/test_callback
+        echo "shut down server."
+        killall ab_server -INT &> /dev/null
+
+    - name: Test Read/Write race condition
+      run: |
+        cd ${{ env.DIST }}
+        echo "start up simulator..."
+        ${{ env.DIST }}/ab_server --plc=controllogix --path=1,0 --tag=Tag_To_Read:DINT[31] --tag=Tag_To_Write:DINT[8] --debug &
+        sleep 2
+        echo "test_read_write_race_condition"
+        ${{ env.DIST }}/test_read_write_race_condition
         echo "shut down server."
         killall ab_server -INT &> /dev/null
 
@@ -170,6 +181,17 @@ jobs:
         echo "shut down server."
         killall ab_server -INT &> /dev/null
 
+    - name: Test Read/Write race condition
+      run: |
+        cd ${{ env.DIST }}
+        echo "start up simulator..."
+        ${{ env.DIST }}/ab_server --plc=controllogix --path=1,0 --tag=Tag_To_Read:DINT[31] --tag=Tag_To_Write:DINT[8] --debug &
+        sleep 2
+        echo "test_read_write_race_condition"
+        ${{ env.DIST }}/test_read_write_race_condition
+        echo "shut down server."
+        killall ab_server -INT &> /dev/null
+
     - name: Test Micro800
       run: |
         cd ${{ env.DIST }}
@@ -281,6 +303,17 @@ jobs:
         ${{ env.DIST }}/simple
         echo "test callback use."
         ${{ env.DIST }}/test_callback
+        echo "shut down server."
+        killall ab_server -INT &> /dev/null
+
+    - name: Test Read/Write race condition
+      run: |
+        cd ${{ env.DIST }}
+        echo "start up simulator..."
+        ${{ env.DIST }}/ab_server --plc=controllogix --path=1,0 --tag=Tag_To_Read:DINT[31] --tag=Tag_To_Write:DINT[8] --debug &
+        sleep 2
+        echo "test_read_write_race_condition"
+        ${{ env.DIST }}/test_read_write_race_condition
         echo "shut down server."
         killall ab_server -INT &> /dev/null
 
@@ -434,6 +467,20 @@ jobs:
         taskkill /F /IM ab_server.exe
       shell: cmd
 
+    - name: Test Read/Write race condition
+      run: |
+        cd ${{ env.DIST }}\Release
+        echo "start up simulator..."
+        start /b .\ab_server.exe --plc=controllogix --path=1,0 --tag=Tag_To_Read:DINT[31] --tag=Tag_To_Write:DINT[8] --debug
+        timeout /T 5
+        echo "test_read_write_race_condition"
+        .\test_read_write_race_condition
+        set test_result=%errorlevel%
+        echo "shut down server."
+        taskkill /F /IM ab_server.exe
+        exit /b %test_result%
+      shell: cmd
+
     - name: Test Micro800
       run: |
         cd ${{ env.DIST }}\Release
@@ -554,6 +601,20 @@ jobs:
         .\test_callback
         echo "shut down server."
         taskkill /F /IM ab_server.exe
+      shell: cmd
+
+    - name: Test Read/Write race condition
+      run: |
+        cd ${{ env.DIST }}\Release
+        echo "start up simulator..."
+        start /b .\ab_server.exe --plc=controllogix --path=1,0 --tag=Tag_To_Read:DINT[31] --tag=Tag_To_Write:DINT[8] --debug
+        timeout /T 5
+        echo "test_read_write_race_condition"
+        .\test_read_write_race_condition
+        set test_result=%errorlevel%
+        echo "shut down server."
+        taskkill /F /IM ab_server.exe
+        exit /b %test_result%
       shell: cmd
 
     - name: Test Micro800
