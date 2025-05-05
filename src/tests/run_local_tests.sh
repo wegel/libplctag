@@ -21,7 +21,7 @@ if [[ ! -d $TEST_DIR ]]; then
 fi
 
 # test for the executables.
-EXECUTABLES="ab_server list_tags_logix string_non_standard_udt string_standard tag_rw2 test_auto_sync test_callback test_callback_ex test_callback_ex_logix test_callback_ex_modbus test_raw_cip test_reconnect test_shutdown test_special test_string test_tag_attributes test_tag_type_attribute thread_stress"
+EXECUTABLES="ab_server list_tags_logix string_non_standard_udt string_standard tag_rw2 test_auto_sync test_auto_sync_reconnect test_callback test_callback_ex test_callback_ex_logix test_callback_ex_modbus test_raw_cip test_reconnect test_shutdown test_special test_string test_tag_attributes test_tag_type_attribute thread_stress"
 # echo -n "  Checking for executables..."
 for EXECUTABLE in $EXECUTABLES
 do
@@ -89,6 +89,34 @@ else
     echo "OK"
     let SUCCESSES++
 fi
+
+let TEST++
+echo -n "Test $TEST: auto sync reconnect... "
+# Make sure ab_server is already running from previous tests
+if ! pgrep -x "ab_server" > /dev/null; then
+    echo "Starting AB emulator for auto_sync_reconnect test."
+    $TEST_DIR/ab_server --debug --plc=ControlLogix --path=1,0 "--tag=TestBigArray:DINT[2000]" > auto_sync_reconnect_emulator.log 2>&1 &
+    EMULATOR_PID=$!
+    if [ $? != 0 ]; then
+        echo "Unable to start AB emulator for auto_sync_reconnect test!"
+        echo "FAILURE"
+        let FAILURES++
+        continue
+    fi
+    sleep 2  # Give the emulator time to start
+fi
+
+$VALGRIND$TEST_DIR/test_auto_sync_reconnect > "${TEST}_auto_sync_reconnect_test.log" 2>&1
+if [ $? != 0 ]; then
+    echo "FAILURE"
+    let FAILURES++
+else
+    echo "OK"
+    let SUCCESSES++
+fi
+
+# Ensure emulator is running again after test (which pauses it)
+killall -CONT ab_server > /dev/null 2>&1
 
 
 let TEST++

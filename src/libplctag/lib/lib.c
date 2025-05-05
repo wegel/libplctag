@@ -382,6 +382,31 @@ void plc_tag_generic_tickler(plc_tag_p tag) {
                     pdebug(DEBUG_SPEW,
                            "Unable to start read tag->read_in_flight=%d, tag->tag_is_dirty=%d, tag->write_in_flight=%d!",
                            tag->read_in_flight, tag->tag_is_dirty, tag->write_in_flight);
+                    
+                    /* Check for stalled reads that might be from a connection loss */
+                    if(tag->read_in_flight) {
+                        /* Define a timeout for potentially stalled operations - use 3x the auto_sync interval as a reasonable timeout */
+                        int64_t read_timeout = tag->auto_sync_read_ms * 3;
+                        
+                        /* If we have a read in flight for longer than our timeout, assume it stalled due to connection issues */
+                        if((current_time - tag->auto_sync_next_read) > read_timeout) {
+                            pdebug(DEBUG_WARN, "Auto-sync read operation appears stalled (possibly due to connection loss). Resetting state to allow reconnection.");
+                            
+                            /* Reset the read operation flags */
+                            tag->read_in_flight = 0;
+                            tag->read_complete = 0;
+                            
+                            /* Set status to an error to indicate connection problem */
+                            tag->status = PLCTAG_ERR_TIMEOUT;
+                            
+                            /* Raise abort event to notify callbacks */
+                            tag_raise_event(tag, PLCTAG_EVENT_ABORTED, PLCTAG_ERR_TIMEOUT);
+                            
+                            /* Reschedule for the next interval */
+                            tag->auto_sync_next_read = current_time + tag->auto_sync_read_ms;
+                            pdebug(DEBUG_DETAIL, "Rescheduling next read attempt at time %" PRId64 ".", tag->auto_sync_next_read);
+                        }
+                    }
                 }
             }
         }
